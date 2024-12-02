@@ -5,13 +5,13 @@ import numpy as np
 
 try:
     from .lbm_border import Circulation, Half_Way_Mirror
-    from .lbm_d2 import D2_BGK, D2_ELBM
+    from .lbm_d2 import D2_BGK, D2_ELBM, D2_Mixed
 except ImportError:
     from lbm_border import Circulation, Half_Way_Mirror
-    from lbm_d2 import D2_BGK, D2_ELBM
+    from lbm_d2 import D2_BGK, D2_ELBM, D2_Mixed
 
 
-__all__ = ["D2Q9_ELBM", "D2Q9_LBM_BGK"]
+__all__ = ["D2Q9_ELBM", "D2Q9_LBM_BGK", "D2Q9_Mixed"]
 
 class D2Q9:
     '''D2Q9 方形格点'''
@@ -27,3 +27,4 @@ class D2Q9_ELBM(D2Q9, D2_ELBM): pass
 
 class D2Q9_LBM_BGK(D2Q9, D2_BGK): pass
 
+class D2Q9_Mixed(D2Q9, D2_Mixed): pass

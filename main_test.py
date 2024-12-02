@@ -6,10 +6,10 @@ import math
 
 try:
     from .lbm_border import Circulation, Half_Way_Mirror
-    from .lbm_d2q9 import D2Q9_ELBM, D2Q9_LBM_BGK
+    from .lbm_d2q9 import D2Q9_ELBM, D2Q9_LBM_BGK, D2Q9_Mixed
 except ImportError:
     from lbm_border import Circulation, Half_Way_Mirror
-    from lbm_d2q9 import D2Q9_ELBM, D2Q9_LBM_BGK
+    from lbm_d2q9 import D2Q9_ELBM, D2Q9_LBM_BGK, D2Q9_Mixed
 
 class elbmc(D2Q9_ELBM, Circulation): pass
 
@@ -17,7 +17,27 @@ class elbmhwm(D2Q9_ELBM, Half_Way_Mirror): pass
 
 class lbmc(D2Q9_LBM_BGK, Circulation): pass
 
-class lbmhwm(D2Q9_LBM_BGK, Circulation): pass
+class lbmhwm(D2Q9_LBM_BGK, Half_Way_Mirror): pass
+
+class mixhwm(D2Q9_Mixed, Half_Way_Mirror): pass
+
+class mixc(D2Q9_Mixed, Circulation): pass
+
+def test(cls):
+    n = 64
+    m = n
+    t = 64
+    k = 2*math.pi/n
+    solver = cls.initial(
+        np.ones((n,n)),
+        np.array([[[
+            -math.cos(k*x)*math.sin(k*y),
+            math.sin(k*x)*math.cos(k*y)
+        ] for y in range(n)] for x in range(n)]),
+        dx=1/n, dt=1/m**2, max_deltaH=1e-13, nu=1e-5)
+    solver.show_flow()
+    solver.iter(times = t, showlog = False, nohistory = True)
+    solver.show_flow()
 
 if __name__ == "__main__":
     '''

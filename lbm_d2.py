@@ -9,7 +9,7 @@ try:
 except ImportError:
     from lbm_core import LBMCore, Constant
 
-__all__ = ["D2_BGK", "D2_ELBM"]
+__all__ = ["D2_BGK", "D2_ELBM", "D2_Mixed"]
 
 class D2(LBMCore):
     def __init__(self, f:np.ndarray, dx:Number, dt:Number, nu:Number, **kwargs):
@@ -99,3 +99,12 @@ class D2_ELBM(D2_BGK):
             for y in range(self.shape[1])] for x in range(self.shape[0])])
         return alphabeta
 
+class D2_Mixed(D2_ELBM):
+
+    def getrelax(self) -> np.ndarray:
+        relax = D2_ELBM.getrelax(self)
+        relax[0,:] = relax[0,:]*0+self.nu
+        relax[-1,:] = relax[0,:]
+        relax[:,0] = relax[:,0]*0+self.nu
+        relax[:,-1] = relax[:,0]
+        return relax
