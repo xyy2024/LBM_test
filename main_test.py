@@ -3,71 +3,63 @@
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 try:
-    from .lbm_border import Circulation, Half_Way_Mirror
+    from .lbm_border import Circulation, Half_Way_Mirror, New_Bounce_Back
     from .lbm_d2q9 import D2Q9_ELBM, D2Q9_LBM_BGK, D2Q9_Mixed
+    from .lbm_core import LBMCore
+    from .lbm_d2 import D2
 except ImportError:
-    from lbm_border import Circulation, Half_Way_Mirror
+    from lbm_border import Circulation, Half_Way_Mirror, New_Bounce_Back
     from lbm_d2q9 import D2Q9_ELBM, D2Q9_LBM_BGK, D2Q9_Mixed
+    from lbm_core import LBMCore
+    from lbm_d2 import D2
 
 class elbmc(D2Q9_ELBM, Circulation): pass
 
 class elbmhwm(D2Q9_ELBM, Half_Way_Mirror): pass
 
+class elbmbb(D2Q9_ELBM, New_Bounce_Back): pass
+
 class lbmc(D2Q9_LBM_BGK, Circulation): pass
 
 class lbmhwm(D2Q9_LBM_BGK, Half_Way_Mirror): pass
+
+class lbmbb(D2Q9_LBM_BGK, New_Bounce_Back): pass
 
 class mixhwm(D2Q9_Mixed, Half_Way_Mirror): pass
 
 class mixc(D2Q9_Mixed, Circulation): pass
 
-def test(cls):
-    n = 64
+class mixbb(D2Q9_Mixed, New_Bounce_Back): pass
+
+def _test(solver: D2, dt):
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
+    solver.add_flow(fig_ax=(fig, ax1))
+    t1 = int(1/16/dt)
+    solver.iter(times = t1, showlog = False, nohistory = True)
+    solver.add_flow(fig_ax=(fig, ax2))
+    t2 = t1*3
+    solver.iter(times = t2, showlog = False, nohistory = True)
+    solver.add_flow(fig_ax=(fig, ax3))
+
+    plt.show()
+
+def Taylor_Green_test(cls, n=64):
     m = n
-    t = 64
     k = 2*math.pi/n
+    ki= math.pi/n
+    dt = 1/m**2
     solver = cls.initial(
-        np.ones((n,n)),
+        np.ones((n,n)), #密度为1
         np.array([[[
-            -math.cos(k*x)*math.sin(k*y),
-            math.sin(k*x)*math.cos(k*y)
+            -math.cos(k*x+ki)*math.sin(k*y+ki),
+            math.sin(k*x+ki)*math.cos(k*y+ki)
         ] for y in range(n)] for x in range(n)]),
-        dx=1/n, dt=1/m**2, max_deltaH=1e-13, nu=1e-5)
-    solver.show_flow()
-    solver.iter(times = t, showlog = False, nohistory = True)
-    solver.show_flow()
+        dx=1/n, dt=dt, max_deltaH=1e-13, nu=1e-5)
+    
+    _test(solver, dt)
 
 if __name__ == "__main__":
-    '''
-    n = 256
-    solver = d2q9_elbm.initial(
-        np.ones((n,n)),
-        np.array([[[
-            0.004*math.tanh(80*((y-n//4)/n if y < n//2 else (n-n//4-y)/n)),
-            0.002*math.sin(math.pi*(x/n+0.5))
-        ] for y in range(n)] for x in range(n)]), 
-        dx=1/n, 
-        dt=1/256, 
-        max_deltaH=1e-13, 
-        nu=1e-5)
-    solver.iter(256) #'''
-    #print(solver.getmomentum())
-
-    #'''
-    n = 64
-    m = n
-    t = 64
-    k = 2*math.pi/n
-    solver = elbmc.initial(
-        np.ones((n,n)),
-        np.array([[[
-            -math.cos(k*x)*math.sin(k*y),
-            math.sin(k*x)*math.cos(k*y)
-        ] for y in range(n)] for x in range(n)]),
-        dx=1/n, dt=1/m**2, max_deltaH=1e-13, nu=1e-5)
-    solver.iter(times = t, showlog = True, nohistory = True) #'''
-
-    solver.show_flow()
-    solver.show_density()
+    Taylor_Green_test(lbmhwm)

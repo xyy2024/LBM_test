@@ -8,7 +8,7 @@ from typing import Self, Callable
 from numbers import Number
 
 import matplotlib.pyplot as plt
-from matplotlib import cm
+from matplotlib import cm, gridspec as gs
 
 __all__ = ["LATEST", "LBMCore", "Border_BC", "Collision_BC", "Constant"]
 
@@ -150,6 +150,63 @@ class LBMCore:
             line = ax.plot(x, velocity)
             ax.set(xlabel="x",ylabel="velocity")
             plt.show()
+            return None
+        if self.dimension == 3:
+            raise ValueError("三维流图尚未支持")
+
+    def add_density(self, fig_ax=None, time=LATEST) -> None:
+        '''增加密度图'''
+        if self.dimension == 2:
+            if fig_ax == None:
+                fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
+            else:
+                fig, ax = fig_ax
+            density = self.getdensity(time)
+            x = np.linspace(0,self.dx*(self.shape[0]-1),num=self.shape[0])
+            y = np.linspace(0,self.dx*(self.shape[1]-1),num=self.shape[1])
+            y,x = np.meshgrid(y,x)
+            fig, ax = fig_ax
+            surf = ax.plot_surface(x, y, density, cmap=cm.coolwarm)
+            ax.set(xlabel="x",ylabel="y")
+            fig.colorbar(surf)
+            return None
+        if self.dimension == 1:
+            if fig_ax == None:
+                fig, ax = plt.subplots()
+            else:
+                fig, ax = fig_ax
+            density = self.getdensity(time)
+            x = np.linspace(0,self.dx*(self.shape[0]-1),num=self.shape[0])
+            line = ax.plot(x, density)
+            ax.set(xlabel="x",ylabel="density")
+            return None
+        if self.dimension == 3:
+            raise ValueError("三维密度图尚未支持")
+
+    def add_flow(self, fig_ax=None, time=LATEST) -> None:
+        '''显示流体流向'''
+        if fig_ax == None:
+            fig, ax = plt.subplots()
+        else:
+            fig, ax = fig_ax
+        if self.dimension == 2:
+            density = self.getdensity(time)
+            momentum= self.getmomentum(time)
+            x = np.linspace(0,self.dx*(self.shape[0]-1),num=self.shape[0])
+            y = np.linspace(0,self.dx*(self.shape[1]-1),num=self.shape[1])
+            x,y = np.meshgrid(x,y)
+            u = momentum[:,:,0]/density
+            v = momentum[:,:,1]/density
+            s = np.sqrt(u**2+v**2)
+            lines = ax.streamplot(x,y,u,v,color=s,cmap="cool")
+            ax.set(xlabel="x",ylabel="y")
+            fig.colorbar(lines.lines)
+            return None
+        if self.dimension == 1:
+            velocity = self.getmomentum(time)[:,0]/self.getdensity(time)
+            x = np.linspace(0,self.dx*(self.shape[0]-1),num=self.shape[0])
+            line = ax.plot(x, velocity)
+            ax.set(xlabel="x",ylabel="velocity")
             return None
         if self.dimension == 3:
             raise ValueError("三维流图尚未支持")

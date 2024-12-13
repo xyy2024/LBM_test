@@ -100,9 +100,9 @@ class D2_ELBM(D2_BGK):
         return alphabeta
 
 class D2_Mixed(D2_ELBM):
-
     def getrelax(self) -> np.ndarray:
         relax = D2_ELBM.getrelax(self)
+        # 将边界处改为 self.nu
         relax[0,:] = relax[0,:]*0+self.nu
         relax[-1,:] = relax[0,:]
         relax[:,0] = relax[:,0]*0+self.nu
