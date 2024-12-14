@@ -17,7 +17,7 @@ class D2(LBMCore):
         self.nu = nu
 
     @classmethod
-    def initial(cls, density:np.ndarray, momentum:np.ndarray, dx:Number, dt:Number, **kwargs):
+    def eq_distribution(cls, density:np.ndarray, momentum:np.ndarray, dx:Number, dt:Number) -> np.ndarray:
         cs_square_negative = 3*dt**2/dx**2
         cs_square_negative_square = cs_square_negative**2
         div_2density = 0.5/density
@@ -33,7 +33,11 @@ class D2(LBMCore):
                 )
             for i in range(cls.w.shape[0])]
             for y in range(density.shape[1])] for x in range(density.shape[0])])
-        return cls(f=feq, dx=dx, dt=dt, **kwargs)
+        return feq
+
+    @classmethod
+    def initial(cls, density:np.ndarray, momentum:np.ndarray, dx:Number, dt:Number, **kwargs):
+        return cls(f=cls.eq_distribution(density, momentum, dx, dt), dx=dx, dt=dt, **kwargs)
 
 class D2_BGK(D2):
     def getrelax(self) -> np.ndarray:
@@ -44,23 +48,7 @@ class D2_BGK(D2):
         density = self.getdensity()
         momentum = self.getmomentum()
 
-        #求feq
-        cs_square_negative = 3*self.dt**2/self.dx**2
-        cs_square_negative_square = cs_square_negative**2
-        div_2density = 0.5/density
-        momentum_square_thing = (momentum*momentum).sum(2)*density*cs_square_negative/2
-        feq = np.array([[
-            [
-                self.w[i]
-                *(
-                    density[x,y]
-                    +(dot_product:=np.dot(self.c[:,i],momentum[x,y,:]))*cs_square_negative
-                    +dot_product**2*cs_square_negative_square*div_2density[x,y]
-                    -momentum_square_thing[x,y]
-                )
-            for i in range(self.w.shape[0])]
-            for y in range(density.shape[1])] for x in range(density.shape[0])])
-        return feq
+        return type(self).eq_distribution(density, momentum, self.dx, self.dt)
 
 def H(grid): return (grid[grid > 0]*np.log(grid[grid > 0])).sum(0)
 
